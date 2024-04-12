@@ -1,7 +1,7 @@
 .. _blink-led-sample:
 .. _pwm-blinky-sample:
 
-PWM Blinky
+tldr_sleep_wake_buzzer
 ##########
 
 Overview
