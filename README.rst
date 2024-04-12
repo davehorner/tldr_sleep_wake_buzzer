@@ -3,6 +3,7 @@
 
 tldr_sleep_wake_buzzer
 ##########
+This project does not sleep.  it sys_poweroff();
 
 Overview
 ********
