@@ -1,12 +1,13 @@
 /*
  * Copyright (c) 2016 Intel Corporation
  * Copyright (c) 2020 Nordic Semiconductor ASA
+ * Copyright (c) 2024 TecDev, LLC
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /**
- * @file Sample app to demonstrate PWM.
+ * @file Sample app to demonstrate PWM lockup.
  */
 
 #include <zephyr/kernel.h>
@@ -63,7 +64,7 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb,
 	making_noise=1;
 	if (ret) {
 		printk("Error %d: failed to set pulse width\n", ret);
-		return 0;
+		return;
 
 	}
 	}
@@ -198,49 +199,6 @@ static void system_off(struct k_work *work)
 }
 
 
-/**
- * @brief  Helper function for printing the reason of the last reset.
- * Can be used to confirm that NCF field actually woke up the system.
- */
-static void print_reset_reason(void)
-{
-	uint32_t reas;
-
-#if NRF_POWER_HAS_RESETREAS
-
-	reas = nrf_power_resetreas_get(NRF_POWER);
-	nrf_power_resetreas_clear(NRF_POWER, reas);
-	if (reas & NRF_POWER_RESETREAS_NFC_MASK) {
-		printk("Wake up by NFC field detect\n");
-	} else if (reas & NRF_POWER_RESETREAS_RESETPIN_MASK) {
-		printk("Reset by pin-reset\n");
-	} else if (reas & NRF_POWER_RESETREAS_SREQ_MASK) {
-		printk("Reset by soft-reset\n");
-	} else if (reas) {
-		printk("Reset by a different source (0x%08X)\n", reas);
-	} else {
-		printk("Power-on-reset\n");
-	}
-
-#else
-
-	reas = nrf_reset_resetreas_get(NRF_RESET);
-	nrf_reset_resetreas_clear(NRF_RESET, reas);
-	if (reas & NRF_RESET_RESETREAS_NFC_MASK) {
-		printk("Wake up by NFC field detect\n");
-	} else if (reas & NRF_RESET_RESETREAS_RESETPIN_MASK) {
-		printk("Reset by pin-reset\n");
-	} else if (reas & NRF_RESET_RESETREAS_SREQ_MASK) {
-		printk("Reset by soft-reset\n");
-	} else if (reas) {
-		printk("Reset by a different source (0x%08X)\n", reas);
-	} else {
-		printk("Power-on-reset\n");
-	}
-
-#endif
-}
-
 int main(void)
 {
 		/* Configure LED-pins */
@@ -262,7 +220,7 @@ int main(void)
 
 	int ret;
 
-	printk("PWM-based blinky\n");
+	printk("tldr PWM-based lockup demonstration\n");
 
 	if (!pwm_is_ready_dt(&buzzer_sig)) {
 		printk("Error: PWM device %s is not ready\n",
@@ -318,21 +276,4 @@ int main(void)
 	/* Show last reset reason */
 	//print_reset_reason();
 	/* Exit main function - the rest will be done by the callbacks */
-	return 0;
-	printk("Press the button\n");
-	if (led.port) {
-		while (1) {
-			/* If we have an LED, match its state to the button's. */
-			int val = gpio_pin_get_dt(&button);
-			if (val >= 0) {
-				gpio_pin_set_dt(&led, val);
-				if(val==0 && making_noise) {
-					ret = pwm_set_dt(&buzzer_sig, 0, 0);
-					making_noise=0;
-				}
-			}
-			k_msleep(SLEEP_TIME_MS);
-		}
-	}
-	return 0;
 }
